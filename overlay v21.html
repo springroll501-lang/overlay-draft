@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DCDT Tournament Captains Draft Overlay</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto+Mono:wght@700&display=swap');
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            width: 1920px;
+            height: 1080px;
+            background: #000000;
+            color: #ffffff;
+            font-family: 'Oswald', sans-serif;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header-container {
+            position: absolute;
+            top: 25px;
+            left: 30px;
+            right: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .main-title { font-size: 42px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #ffffff; }
+
+        .prizepool-box {
+            background: #000000;
+            border: 3px solid #72D453;
+            padding: 8px 25px;
+            font-size: 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .left-sidebar {
+            position: absolute;
+            top: 120px;
+            left: 30px;
+            width: 440px;
+            bottom: 35px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .pacing-hub { background: #0b0d12; border: 3px solid #1A5206; padding: 12px 20px; }
+        .section-header { font-size: 13px; color: #72D453; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 6px; border-bottom: 1px solid #1A5206; padding-bottom: 2px; }
+        .status-line { font-size: 24px; font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
+        .status-line.current span { color: #72D453; }
+        .status-line.next span { color: #FF8137; }
+        .round-badge { margin-top: 8px; border-top: 2px dashed #1A5206; padding-top: 6px; font-family: 'Roboto Mono', monospace; font-size: 15px; color: #FF8137; text-transform: uppercase; }
+
+        .analytics-matrix { background: #0b0d12; border: 3px solid #1A5206; padding: 12px 20px; display: flex; flex-direction: column; gap: 12px; }
+        .main-stats-header { font-size: 18px; color: #ffffff; text-transform: uppercase; letter-spacing: 3px; border-bottom: 2px solid #72D453; padding-bottom: 2px; font-weight: 700; }
+        .matrix-row { display: flex; justify-content: space-between; gap: 20px; }
+        .matrix-box { width: 50%; }
+        .matrix-box h3 { font-size: 11px; color: #72D453; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; border-bottom: 1px solid #1A5206; padding-bottom: 2px; }
+        .data-line { display: flex; justify-content: space-between; font-family: 'Roboto Mono', monospace; font-size: 11px; margin-bottom: 2px; }
+        .data-label { color: #A0A0A0; flex-shrink: 0; margin-right: 5px; }
+        .data-value { color: #ffffff; font-weight: 700; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .pick-history-banner { background: #0b0d12; border: 3px solid #1A5206; padding: 15px; flex-grow: 1; display: flex; flex-direction: column; }
+        .banner-title { font-size: 14px; color: #FF8137; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; border-bottom: 1px solid #1A5206; padding-bottom: 2px; }
+        .ticker-container { display: flex; flex-direction: column; gap: 6px; font-family: 'Roboto Mono', monospace; font-size: 12px; }
+        .ticker-line { display: flex; justify-content: flex-start; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .ticker-tag { color: #FF8137; margin-right: 8px; font-weight: 700; }
+        .ticker-body { color: #ffffff; }
+
+        .casters-banner { width: 100%; height: 45px; background: #0b0d12; border: 3px solid #FF8137; display: flex; align-items: center; justify-content: center; font-size: 15px; text-transform: uppercase; letter-spacing: 2px; flex-shrink: 0; }
+        .casters-banner span { color: #FF8137; margin-left: 6px; font-weight: 700; }
+
+        .opgg-window-container { position: absolute; top: 120px; left: 495px; width: 535px; bottom: 35px; border: 3px solid #72D453; background: rgba(11, 13, 18, 0.3); }
+
+        .teamsheet-window-container { position: absolute; top: 120px; left: 1055px; right: 30px; bottom: 35px; border: 3px solid #1A5206; background: #050608; padding: 25px 15px 15px 15px; overflow-y: auto; }
+        .teamsheet-window-container::-webkit-scrollbar { width: 6px; }
+        .teamsheet-window-container::-webkit-scrollbar-track { background: #050608; }
+        .teamsheet-window-container::-webkit-scrollbar-thumb { background: #1A5206; border-radius: 3px; }
+
+        .teams-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .team-card { background: #0c0e12; border: 2px solid #1A5206; display: flex; flex-direction: column; }
+        .team-header { display: flex; align-items: center; padding: 6px 10px; font-weight: 700; text-transform: uppercase; font-size: 16px; letter-spacing: 1px; color: #ffffff; }
+        .team-logo-slot { width: 28px; height: 28px; margin-right: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: transparent; }
+        .team-logo-slot img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        .card-dk img, .card-edg img, .card-g2 img, .card-lr img, .card-kc img, .card-t1 img { filter: drop-shadow(1px 0px 0px #ffffff) drop-shadow(-1px 0px 0px #ffffff) drop-shadow(0px 1px 0px #ffffff) drop-shadow(0px -1px 0px #ffffff); }
+        .card-blg img, .card-c9 img, .card-fnc img, .card-fps img, .card-hle img, .card-lyon img, .card-geng img, .card-tes img, .card-wbg img { filter: drop-shadow(1px 1px 1px #000000) drop-shadow(-1px -1px 1px #000000); }
+
+        .card-blg .team-header { background: #00D2FF; color: #000000; }
+        .card-c9 .team-header { background: #00A1DF; }
+        .card-dk .team-header { background: #111111; border-bottom: 1px solid #00E5FF; }
+        .card-edg .team-header { background: #1F1F1F; border-bottom: 1px solid #ffffff; }
+        .card-fnc .team-header { background: #FF5C00; }
+        .card-fps .team-header { background: #DE1A22; }
+        .card-g2 .team-header { background: #181818; }
+        .card-geng .team-header { background: #AA8126; }
+        .card-hle .team-header { background: #FF6B00; }
+        .card-kc .team-header { background: #004B93; }
+        .card-lr .team-header { background: #0A141D; border-bottom: 1px solid #00FFCC; }
+        .card-lyon .team-header { background: #D4AF37; }
+        .card-t1 .team-header { background: #8B0000; }
+        .card-tes .team-header { background: #E53935; }
+        .card-wbg .team-header { background: #E61A22; }
+
+        .roster-body { padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; }
+        .roster-row { display: flex; justify-content: space-between; font-family: 'Roboto Mono', monospace; font-size: 12px; border-bottom: 1px solid rgba(26, 82, 6, 0.15); padding-bottom: 2px; }
+        .roster-row.manager-row { border-bottom: 2px solid #FF8137; margin-bottom: 4px; }
+        .role-label { color: #A0A0A0; text-transform: uppercase; }
+        .player-name { color: #ffffff; font-weight: 700; }
+        .roster-row.manager-row .player-name { color: #FF8137; }
+
+        .cutout-label { position: absolute; top: -15px; left: 15px; background: #000000; padding: 0 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; z-index: 15; }
+        .opgg-label { color: #72D453; }
+        .sheet-label { color: #1A5206; }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <div class="main-title">Captains Draft Board</div>
+        <div class="prizepool-box" id="live-prizepool">-</div>
+    </div>
+
+    <div class="left-sidebar">
+        <div class="pacing-hub">
+            <div class="section-header">Pick Order</div>
+            <div class="status-line current">Current: <span id="live-current">-</span></div>
+            <div class="status-line next">Next: <span id="live-next">-</span></div>
+            <div class="round-badge" id="live-round">-</div>
+        </div>
+        <div class="analytics-matrix">
+            <div class="main-stats-header">Stats</div>
+            <div class="matrix-row">
+                <div class="matrix-box">
+                    <h3>Rank of Players Remaining</h3>
+                    <div class="data-line"><span class="data-label">TOP</span><span class="data-value" id="rem-top">-</span></div>
+                    <div class="data-line"><span class="data-label">JGL</span><span class="data-value" id="rem-jgl">-</span></div>
+                    <div class="data-line"><span class="data-label">MID</span><span class="data-value" id="rem-mid">-</span></div>
+                    <div class="data-line"><span class="data-label">ADC</span><span class="data-value" id="rem-adc">-</span></div>
+                    <div class="data-line"><span class="data-label">SUP</span><span class="data-value" id="rem-sup">-</span></div>
+                </div>
+                <div class="matrix-box">
+                    <h3>Average Rank</h3>
+                    <div class="data-line"><span class="data-label">TOP</span><span class="data-value" id="avg-top">-</span></div>
+                    <div class="data-line"><span class="data-label">JGL</span><span class="data-value" id="avg-jgl">-</span></div>
+                    <div class="data-line"><span class="data-label">MID</span><span class="data-value" id="avg-mid">-</span></div>
+                    <div class="data-line"><span class="data-label">ADC</span><span class="data-value" id="avg-adc">-</span></div>
+                    <div class="data-line"><span class="data-label">SUP</span><span class="data-value" id="avg-sup">-</span></div>
+                </div>
+            </div>
+            <div class="matrix-row">
+                <div class="matrix-box">
+                    <h3>Average Rank Diff</h3>
+                    <div class="data-line"><span class="data-label">TOP</span><span class="data-value" id="diff-top">-</span></div>
+                    <div class="data-line"><span class="data-label">JGL</span><span class="data-value" id="diff-jgl">-</span></div>
+                    <div class="data-line"><span class="data-label">MID</span><span class="data-value" id="diff-mid">-</span></div>
+                    <div class="data-line"><span class="data-label">ADC</span><span class="data-value" id="diff-adc">-</span></div>
+                    <div class="data-line"><span class="data-label">SUP</span><span class="data-value" id="diff-sup">-</span></div>
+                </div>
+                <div class="matrix-box">
+                    <h3>LP Difference Avg</h3>
+                    <div class="data-line"><span class="data-label">TOP DELTA</span><span class="data-value" id="lp-top">-</span></div>
+                    <div class="data-line"><span class="data-label">JGL DELTA</span><span class="data-value" id="lp-jgl">-</span></div>
+                    <div class="data-line"><span class="data-label">MID DELTA</span><span class="data-value" id="lp-mid">-</span></div>
+                    <div class="data-line"><span class="data-label">ADC DELTA</span><span class="data-value" id="lp-adc">-</span></div>
+                    <div class="data-line"><span class="data-label">SUP DELTA</span><span class="data-value" id="lp-sup">-</span></div>
+                </div>
+            </div>
+            <div class="matrix-row username-row">
+                <div class="matrix-box">
+                    <h3>Highest Ranked Available</h3>
+                    <div class="data-line"><span class="data-label">TOP</span><span class="data-value" id="high-top">-</span></div>
+                    <div class="data-line"><span class="data-label">JGL</span><span class="data-value" id="high-jgl">-</span></div>
+                    <div class="data-line"><span class="data-label">MID</span><span class="data-value" id="high-mid">-</span></div>
+                    <div class="data-line"><span class="data-label">ADC</span><span class="data-value" id="high-adc">-</span></div>
+                    <div class="data-line"><span class="data-label">SUP</span><span class="data-value" id="high-sup">-</span></div>
+                </div>
+                <div class="matrix-box">
+                    <h3>Lowest Ranked Available</h3>
+                    <div class="data-line"><span class="data-label">TOP</span><span class="data-value" id="low-top">-</span></div>
+                    <div class="data-line"><span class="data-label">JGL</span><span class="data-value" id="low-jgl">-</span></div>
+                    <div class="data-line"><span class="data-label">MID</span><span class="data-value" id="low-mid">-</span></div>
+                    <div class="data-line"><span class="data-label">ADC</span><span class="data-value" id="low-adc">-</span></div>
+                    <div class="data-line"><span class="data-label">SUP</span><span class="data-value" id="low-sup">-</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="pick-history-banner">
+            <div class="banner-title">Pick History</div>
+            <div class="ticker-container" id="history-ticker"></div>
+        </div>
+        <div class="casters-banner">Casters: <span id="live-casters">-</span></div>
+    </div>
+
+    <div class="opgg-window-container">
+        <div class="cutout-label opgg-label">Last Picked Player OP.GG</div>
+    </div>
+
+    <div class="teamsheet-window-container">
+        <div class="cutout-label sheet-label">Teamsheet</div>
+        <div class="teams-grid">
+            <div class="team-card card-blg"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/blg.png"></div>Bilibili Gaming</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="blg-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="blg-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="blg-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="blg-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="blg-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="blg-sup">-</span></div></div></div>
+            <div class="team-card card-c9"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/c9.png"></div>Cloud9</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="c9-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="c9-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="c9-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="c9-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="c9-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="c9-sup">-</span></div></div></div>
+            <div class="team-card card-dk"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/dk.png"></div>Dplus KIA</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="dk-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="dk-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="dk-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="dk-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="dk-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="dk-sup">-</span></div></div></div>
+            <div class="team-card card-edg"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/edg.png"></div>EDward Gaming</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="edg-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="edg-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="edg-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="edg-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="edg-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="edg-sup">-</span></div></div></div>
+            <div class="team-card card-fnc"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/fnc.webp"></div>Fnatic</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="fnc-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="fnc-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="fnc-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="fnc-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="fnc-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="fnc-sup">-</span></div></div></div>
+            <div class="team-card card-fps"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/fps.webp"></div>FunPlus Phoenix</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="fps-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="fps-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="fps-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="fps-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="fps-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="fps-sup">-</span></div></div></div>
+            <div class="team-card card-g2"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/g2.png"></div>G2 Esports</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="g2-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="g2-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="g2-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="g2-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="g2-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="g2-sup">-</span></div></div></div>
+            <div class="team-card card-geng"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/gen.g.png"></div>Gen.G</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="geng-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="geng-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="geng-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="geng-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="geng-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="geng-sup">-</span></div></div></div>
+            <div class="team-card card-hle"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/hle.png"></div>Hanwha Life</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="hle-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="hle-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="hle-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="hle-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="hle-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="hle-sup">-</span></div></div></div>
+            <div class="team-card card-kc"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/kc.png"></div>Karmine Corp</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="kc-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="kc-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="kc-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="kc-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="kc-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="kc-sup">-</span></div></div></div>
+            <div class="team-card card-lr"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/lr.png"></div>Los Ratones</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="lr-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="lr-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="lr-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="lr-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="lr-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="lr-sup">-</span></div></div></div>
+            <div class="team-card card-lyon"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/lyon.png"></div>Lyon Gaming</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="lyon-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="lyon-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="lyon-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="lyon-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="lyon-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="lyon-sup">-</span></div></div></div>
+            <div class="team-card card-t1"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/t1.webp"></div>T1</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="t1-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="t1-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="t1-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="t1-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="t1-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="t1-sup">-</span></div></div></div>
+            <div class="team-card card-tes"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/tes.webp"></div>Top Esports</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="tes-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="tes-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="tes-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="tes-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="tes-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="tes-sup">-</span></div></div></div>
+            <div class="team-card card-wbg"><div class="team-header"><div class="team-logo-slot"><img src="LOGOS FOR TEAMS/wbg.png"></div>Weibo Gaming</div><div class="roster-body"><div class="roster-row manager-row"><span class="role-label">Manager</span><span class="player-name" id="wbg-mgr">-</span></div><div class="roster-row"><span class="role-label">Top</span><span class="player-name" id="wbg-top">-</span></div><div class="roster-row"><span class="role-label">Jungle</span><span class="player-name" id="wbg-jgl">-</span></div><div class="roster-row"><span class="role-label">Mid</span><span class="player-name" id="wbg-mid">-</span></div><div class="roster-row"><span class="role-label">ADC</span><span class="player-name" id="wbg-adc">-</span></div><div class="roster-row"><span class="role-label">Support</span><span class="player-name" id="wbg-sup">-</span></div></div></div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // YOUR EXACT GOOGLE SHEET ID IS NOW HARDCODED BELOW
+        // =========================================================================
+        const REAL_SHEET_ID = "12_VofPwWeQKbH4Qll9_BELi_ETjNPAv3dLmL420ZUbg";
+        const gid = "100001"; 
+
+        // OVERLAY CONFIGURATION
+        const cellMapping = {
+            general: {
+                'live-current': 'B2',
+                'live-next': 'B3',
+                'live-round': 'B4',
+                'live-prizepool': 'B5',
+                'live-casters': 'B6'
+            },
+            stats: {
+                'rem-top': 'B9', 'avg-top': 'C9', 'diff-top': 'B16', 'lp-top': 'C16', 'high-top': 'B23', 'low-top': 'C23',
+                'rem-jgl': 'B10', 'avg-jgl': 'C10', 'diff-jgl': 'B17', 'lp-jgl': 'C17', 'high-jgl': 'B24', 'low-jgl': 'C24',
+                'rem-mid': 'B11', 'avg-mid': 'C11', 'diff-mid': 'B18', 'lp-mid': 'C18', 'high-mid': 'B25', 'low-mid': 'C25',
+                'rem-adc': 'B12', 'avg-adc': 'C12', 'diff-adc': 'B19', 'lp-adc': 'C19', 'high-adc': 'B26', 'low-adc': 'C26',
+                'rem-sup': 'B13', 'avg-sup': 'C13', 'diff-sup': 'B20', 'lp-sup': 'C20', 'high-sup': 'B27', 'low-sup': 'C27'
+            },
+            ticker: [
+                { tag: 'A30', body: 'B30' },
+                { tag: 'A31', body: 'B31' },
+                { tag: 'A32', body: 'B32' }
+            ],
+            teams: {
+                'blg': 'C36', 'c9': 'C44', 'dk': 'C52', 'edg': 'C60', 'fnc': 'C68', 'fps': 'C76', 'g2': 'C84', 'geng': 'C92',
+                'hle': 'C100', 'kc': 'C108', 'lr': 'C116', 'lyon': 'C124', 't1': 'C132', 'tes': 'C140', 'wbg': 'C148'
+            }
+        };
+
+        function parseCell(cellStr) {
+            const match = cellStr.match(/([A-Z]+)([0-9]+)/i);
+            if (!match) return { row: 0, col: 0 };
+            let colStr = match[1].toUpperCase();
+            let rowNum = parseInt(match[2], 10) - 1; 
+            let colNum = 0;
+            for (let i = 0; i < colStr.length; i++) {
+                colNum = colNum * 26 + (colStr.charCodeAt(i) - 64);
+            }
+            return { row: rowNum, col: colNum - 1 };
+        }
+
+        function parseCSV(text) {
+            const result = [];
+            let row = [];
+            let cell = '';
+            let inQuotes = false;
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                if (char === '"' && text[i + 1] === '"') { cell += '"'; i++; } 
+                else if (char === '"') { inQuotes = !inQuotes; } 
+                else if (char === ',' && !inQuotes) { row.push(cell); cell = ''; } 
+                else if (char === '\n' && !inQuotes) { row.push(cell); result.push(row); row = []; cell = ''; } 
+                else if (char !== '\r') { cell += char; }
+            }
+            if (cell || text[text.length - 1] === ',') row.push(cell);
+            if (row.length > 0) result.push(row);
+            return result;
+        }
+
+        async function updateOverlayData() {
+            try {
+                if (REAL_SHEET_ID === "PASTE_YOUR_REAL_ID_HERE") {
+                    document.getElementById('live-current').innerText = "ERROR: PASTE ID";
+                    return;
+                }
+
+                // =========================================================================
+                // THE FIX: Using the Google Visualization API bypasses CORS blocks entirely
+                // =========================================================================
+                const timestamp = new Date().getTime();
+                const fetchUrl = `https://docs.google.com/spreadsheets/d/${REAL_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&t=${timestamp}`;
+
+                const response = await fetch(fetchUrl);
+                if (!response.ok) throw new Error("Network blocked");
+                
+                const data = await response.text();
+                
+                if (data.includes("<html")) {
+                    document.getElementById('live-current').innerText = "ERROR: SHARE SHEET";
+                    return;
+                }
+
+                const rows = parseCSV(data);
+                
+                const read = (cellStr) => {
+                    const coords = parseCell(cellStr);
+                    return (rows[coords.row] && rows[coords.row][coords.col] !== undefined && rows[coords.row][coords.col].trim() !== "") 
+                        ? rows[coords.row][coords.col].trim() 
+                        : "-";
+                };
+
+                ['general', 'stats'].forEach(category => {
+                    Object.entries(cellMapping[category]).forEach(([id, cell]) => {
+                        const el = document.getElementById(id);
+                        if (el) el.innerText = read(cell);
+                    });
+                });
+
+                const tickerBox = document.getElementById('history-ticker');
+                if (tickerBox) {
+                    let tickerHTML = "";
+                    cellMapping.ticker.forEach(line => {
+                        const tagTxt = read(line.tag);
+                        const bodyTxt = read(line.body);
+                        if (tagTxt !== "-" && bodyTxt !== "-") {
+                            tickerHTML += `<div class="ticker-line"><span class="ticker-tag">${tagTxt}</span><span class="ticker-body">${bodyTxt}</span></div>`;
+                        }
+                    });
+                    tickerBox.innerHTML = tickerHTML;
+                }
+
+                const roles = ['mgr', 'top', 'jgl', 'mid', 'adc', 'sup'];
+                Object.entries(cellMapping.teams).forEach(([teamId, mgrCell]) => {
+                    const baseCoords = parseCell(mgrCell);
+                    roles.forEach((role, idx) => {
+                        const el = document.getElementById(`${teamId}-${role}`);
+                        if (el) {
+                            const val = (rows[baseCoords.row + idx] && rows[baseCoords.row + idx][baseCoords.col] !== undefined && rows[baseCoords.row + idx][baseCoords.col].trim() !== "") 
+                                ? rows[baseCoords.row + idx][baseCoords.col].trim() 
+                                : "-";
+                            el.innerText = val;
+                        }
+                    });
+                });
+
+            } catch (error) { 
+                console.error("Sync Error:", error);
+                document.getElementById('live-current').innerText = "CONNECTION FAILED";
+            }
+        }
+        
+        setInterval(updateOverlayData, 3000);
+        updateOverlayData();
+    </script>
+</body>
+</html>

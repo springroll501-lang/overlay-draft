@@ -227,29 +227,10 @@
     </div>
 
     <script>
-        const REAL_SHEET_ID = "12_VofPwWeQKbH4Qll9_BELi_ETjNPAv3dLmL420ZUbg";
-        const gid = "1613561659"; 
-
-        function parseCSV(text) {
-            const result = [];
-            let row = [];
-            let cell = '';
-            let inQuotes = false;
-            for (let i = 0; i < text.length; i++) {
-                const char = text[i];
-                if (char === '"' && text[i + 1] === '"' && inQuotes) { cell += '"'; i++; } 
-                else if (char === '"') { inQuotes = !inQuotes; } 
-                else if (char === ',' && !inQuotes) { row.push(cell); cell = ''; } 
-                else if (char === '\n' && !inQuotes) { row.push(cell); result.push(row); row = []; cell = ''; } 
-                else if (char !== '\r') { cell += char; }
-            }
-            if (cell || text[text.length - 1] === ',') row.push(cell);
-            if (row.length > 0) result.push(row);
-            return result;
-        }
+        // PASTE YOUR WEB APP URL BETWEEN THESE QUOTES:
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz8llg7gY5iNdZXtg2Lv76PmPJt2uY5Hsrze2fnQTKmWeTVg_fHxy82OzR23STSpibE/exec"; 
 
         let isFetching = false;
-
         const statIds = [
             'rem-top', 'rem-jgl', 'rem-mid', 'rem-adc', 'rem-sup',
             'avg-top', 'avg-jgl', 'avg-mid', 'avg-adc', 'avg-sup',
@@ -264,14 +245,11 @@
             isFetching = true;
 
             try {
-                const timestamp = new Date().getTime();
-                const fetchUrl = `https://docs.google.com/spreadsheets/d/${REAL_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&t=${timestamp}`;
-
-                const response = await fetch(fetchUrl);
+                // Fetch the live JSON data from the Web App
+                const response = await fetch(WEB_APP_URL);
                 if (!response.ok) throw new Error("Network blocked");
                 
-                const data = await response.text();
-                const rows = parseCSV(data);
+                const rows = await response.json(); 
                 
                 const teamNames = {
                     'Bilibili Gaming': 'blg', 'Cloud9': 'c9', 'Dplus KIA': 'dk', 
@@ -286,7 +264,7 @@
                 let roleIndex = 0;
                 const roleMap = ['top', 'jgl', 'mid', 'adc', 'sup'];
 
-                // Reset stats to dashed lines cleanly before checking for new data
+                // Reset stats cleanly
                 statIds.forEach(id => {
                     const el = document.getElementById(id);
                     if (el) el.innerText = "-";
@@ -296,29 +274,25 @@
 
                 for (let r = 0; r < rows.length; r++) {
                     let row = rows[r];
-                    let col0 = row[0] ? row[0].trim() : "";
-                    let col1 = row[1] ? row[1].trim() : "";
-                    let col2 = row[2] ? row[2].trim() : "";
+                    let col0 = row[0] ? String(row[0]).trim() : "";
+                    let col1 = row[1] ? String(row[1]).trim() : "";
+                    let col2 = row[2] ? String(row[2]).trim() : "";
                     
-                    // NEW: Updated Pacing Hub Parsing
                     if (col0 === "Current Manager") document.getElementById('live-current-mgr').innerText = col1 || "-";
                     if (col0 === "Round Info") document.getElementById('live-next-info').innerText = col1 || "-";
                     if (col0 === "Casters") document.getElementById('live-casters').innerText = col1 || "-";
 
-                    // NEW: Stats Parsing (Overrides the dashes if the stat tag is found)
                     if (statIds.includes(col0)) {
                         let statEl = document.getElementById(col0);
                         if (statEl) statEl.innerText = col1 || "-";
                     }
 
-                    // NEW: Pick History Parsing
                     if (col0.startsWith("History ")) {
                         if (col1 && col2 && col1 !== "-" && col2 !== "-") {
                             tickerHTML += `<div class="ticker-line"><span class="ticker-tag">${col1}</span><span class="ticker-body">${col2}</span></div>`;
                         }
                     }
                     
-                    // Team Roster Parsing
                     if (teamNames[col0]) {
                         currentTeam = teamNames[col0];
                         let mgrEl = document.getElementById(`${currentTeam}-mgr`);
@@ -332,7 +306,6 @@
                     }
                 }
 
-                // Push History HTML to the screen
                 const tickerBox = document.getElementById('history-ticker');
                 if (tickerBox) tickerBox.innerHTML = tickerHTML;
 
@@ -343,7 +316,8 @@
             }
         }
         
-        setInterval(updateOverlayData, 3000);
+        // Pings the sheet every 2 seconds for instant visual updates
+        setInterval(updateOverlayData, 2000); 
         updateOverlayData();
     </script>
 </body>

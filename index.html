@@ -227,13 +227,13 @@
     </div>
 
     <script>
-        // =========================================================================
-        // YOUR EXACT GOOGLE SHEET ID IS NOW HARDCODED BELOW
-        // =========================================================================
         const REAL_SHEET_ID = "12_VofPwWeQKbH4Qll9_BELi_ETjNPAv3dLmL420ZUbg";
+        // =================================================================================
+        // IMPORTANT: Ensure this gid matches the tab where your dashboard is located.
+        // If your dashboard is the first tab, change this to "0".
+        // =================================================================================
         const gid = "100001"; 
 
-        // OVERLAY CONFIGURATION
         const cellMapping = {
             general: {
                 'live-current': 'B2',
@@ -290,16 +290,18 @@
             return result;
         }
 
+        let isFetching = false;
+
         async function updateOverlayData() {
+            if (isFetching) return;
+            isFetching = true;
+
             try {
                 if (REAL_SHEET_ID === "PASTE_YOUR_REAL_ID_HERE") {
                     document.getElementById('live-current').innerText = "ERROR: PASTE ID";
                     return;
                 }
 
-                // =========================================================================
-                // THE FIX: Using the Google Visualization API bypasses CORS blocks entirely
-                // =========================================================================
                 const timestamp = new Date().getTime();
                 const fetchUrl = `https://docs.google.com/spreadsheets/d/${REAL_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&t=${timestamp}`;
 
@@ -359,6 +361,8 @@
             } catch (error) { 
                 console.error("Sync Error:", error);
                 document.getElementById('live-current').innerText = "CONNECTION FAILED";
+            } finally {
+                isFetching = false;
             }
         }
         

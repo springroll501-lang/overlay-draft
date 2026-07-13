@@ -228,49 +228,7 @@
 
     <script>
         const REAL_SHEET_ID = "12_VofPwWeQKbH4Qll9_BELi_ETjNPAv3dLmL420ZUbg";
-        // =================================================================================
-        // IMPORTANT: Ensure this gid matches the tab where your dashboard is located.
-        // If your dashboard is the first tab, change this to "0".
-        // =================================================================================
-        const gid = "100001"; 
-
-        const cellMapping = {
-            general: {
-                'live-current': 'B2',
-                'live-next': 'B3',
-                'live-round': 'B4',
-                'live-prizepool': 'B5',
-                'live-casters': 'B6'
-            },
-            stats: {
-                'rem-top': 'B9', 'avg-top': 'C9', 'diff-top': 'B16', 'lp-top': 'C16', 'high-top': 'B23', 'low-top': 'C23',
-                'rem-jgl': 'B10', 'avg-jgl': 'C10', 'diff-jgl': 'B17', 'lp-jgl': 'C17', 'high-jgl': 'B24', 'low-jgl': 'C24',
-                'rem-mid': 'B11', 'avg-mid': 'C11', 'diff-mid': 'B18', 'lp-mid': 'C18', 'high-mid': 'B25', 'low-mid': 'C25',
-                'rem-adc': 'B12', 'avg-adc': 'C12', 'diff-adc': 'B19', 'lp-adc': 'C19', 'high-adc': 'B26', 'low-adc': 'C26',
-                'rem-sup': 'B13', 'avg-sup': 'C13', 'diff-sup': 'B20', 'lp-sup': 'C20', 'high-sup': 'B27', 'low-sup': 'C27'
-            },
-            ticker: [
-                { tag: 'A30', body: 'B30' },
-                { tag: 'A31', body: 'B31' },
-                { tag: 'A32', body: 'B32' }
-            ],
-            teams: {
-                'blg': 'C36', 'c9': 'C44', 'dk': 'C52', 'edg': 'C60', 'fnc': 'C68', 'fps': 'C76', 'g2': 'C84', 'geng': 'C92',
-                'hle': 'C100', 'kc': 'C108', 'lr': 'C116', 'lyon': 'C124', 't1': 'C132', 'tes': 'C140', 'wbg': 'C148'
-            }
-        };
-
-        function parseCell(cellStr) {
-            const match = cellStr.match(/([A-Z]+)([0-9]+)/i);
-            if (!match) return { row: 0, col: 0 };
-            let colStr = match[1].toUpperCase();
-            let rowNum = parseInt(match[2], 10) - 1; 
-            let colNum = 0;
-            for (let i = 0; i < colStr.length; i++) {
-                colNum = colNum * 26 + (colStr.charCodeAt(i) - 64);
-            }
-            return { row: rowNum, col: colNum - 1 };
-        }
+        const gid = "1613561659"; 
 
         function parseCSV(text) {
             const result = [];
@@ -297,11 +255,6 @@
             isFetching = true;
 
             try {
-                if (REAL_SHEET_ID === "PASTE_YOUR_REAL_ID_HERE") {
-                    document.getElementById('live-current').innerText = "ERROR: PASTE ID";
-                    return;
-                }
-
                 const timestamp = new Date().getTime();
                 const fetchUrl = `https://docs.google.com/spreadsheets/d/${REAL_SHEET_ID}/gviz/tq?tqx=out:csv&gid=${gid}&t=${timestamp}`;
 
@@ -309,58 +262,67 @@
                 if (!response.ok) throw new Error("Network blocked");
                 
                 const data = await response.text();
-                
-                if (data.includes("<html")) {
-                    document.getElementById('live-current').innerText = "ERROR: SHARE SHEET";
-                    return;
-                }
-
                 const rows = parseCSV(data);
                 
-                const read = (cellStr) => {
-                    const coords = parseCell(cellStr);
-                    return (rows[coords.row] && rows[coords.row][coords.col] !== undefined && rows[coords.row][coords.col].trim() !== "") 
-                        ? rows[coords.row][coords.col].trim() 
-                        : "-";
+                const teamNames = {
+                    'Bilibili Gaming': 'blg', 'Cloud9': 'c9', 'Dplus KIA': 'dk', 
+                    'EDG': 'edg', 'EDward Gaming': 'edg', 'Fnatic': 'fnc', 
+                    'FPX': 'fps', 'FunPlus Phoenix': 'fps', 'G2': 'g2', 'G2 Esports': 'g2', 
+                    'Gen.G': 'geng', 'Hanhwa Life': 'hle', 'Hanwha Life': 'hle', 
+                    'Karmine Corp': 'kc', 'Los Ratones': 'lr', 'Lyon Gaming': 'lyon', 
+                    'T1': 't1', 'TOP Esports': 'tes', 'Top Esports': 'tes', 'Weibo Gaming': 'wbg'
                 };
 
-                ['general', 'stats'].forEach(category => {
-                    Object.entries(cellMapping[category]).forEach(([id, cell]) => {
-                        const el = document.getElementById(id);
-                        if (el) el.innerText = read(cell);
-                    });
+                let currentTeam = null;
+                let roleIndex = 0;
+                const roleMap = ['top', 'jgl', 'mid', 'adc', 'sup'];
+
+                for (let r = 0; r < rows.length; r++) {
+                    let row = rows[r];
+                    let col0 = row[0] ? row[0].trim() : "";
+                    let col1 = row[1] ? row[1].trim() : "";
+                    let col2 = row[2] ? row[2].trim() : "";
+                    
+                    // 1. General Info (Column B)
+                    if (col0 === "Current Pick") document.getElementById('live-current').innerText = col1 || "-";
+                    if (col0 === "Next Pick") document.getElementById('live-next').innerText = col1 || "-";
+                    if (col0 === "Round") document.getElementById('live-round').innerText = col1 || "-";
+                    if (col0 === "Prize Pool") document.getElementById('live-prizepool').innerText = col1 || "-";
+                    if (col0 === "Casters") document.getElementById('live-casters').innerText = col1 || "-";
+                    
+                    // 2. Dynamic Team Rosters (Column C / col2)
+                    if (teamNames[col0]) {
+                        currentTeam = teamNames[col0];
+                        let mgrEl = document.getElementById(`${currentTeam}-mgr`);
+                        if (mgrEl) mgrEl.innerText = col2 || "-";
+                        roleIndex = 0;
+                    } else if (currentTeam && roleIndex < 5) {
+                        let roleId = roleMap[roleIndex];
+                        let el = document.getElementById(`${currentTeam}-${roleId}`);
+                        if (el) el.innerText = col2 || "-"; 
+                        roleIndex++;
+                    }
+                }
+
+                // 3. Keep stats blank cleanly
+                const statIds = [
+                    'rem-top', 'rem-jgl', 'rem-mid', 'rem-adc', 'rem-sup',
+                    'avg-top', 'avg-jgl', 'avg-mid', 'avg-adc', 'avg-sup',
+                    'diff-top', 'diff-jgl', 'diff-mid', 'diff-adc', 'diff-sup',
+                    'lp-top', 'lp-jgl', 'lp-mid', 'lp-adc', 'lp-sup',
+                    'high-top', 'high-jgl', 'high-mid', 'high-adc', 'high-sup',
+                    'low-top', 'low-jgl', 'low-mid', 'low-adc', 'low-sup'
+                ];
+                statIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.innerText = "-";
                 });
 
                 const tickerBox = document.getElementById('history-ticker');
-                if (tickerBox) {
-                    let tickerHTML = "";
-                    cellMapping.ticker.forEach(line => {
-                        const tagTxt = read(line.tag);
-                        const bodyTxt = read(line.body);
-                        if (tagTxt !== "-" && bodyTxt !== "-") {
-                            tickerHTML += `<div class="ticker-line"><span class="ticker-tag">${tagTxt}</span><span class="ticker-body">${bodyTxt}</span></div>`;
-                        }
-                    });
-                    tickerBox.innerHTML = tickerHTML;
-                }
-
-                const roles = ['mgr', 'top', 'jgl', 'mid', 'adc', 'sup'];
-                Object.entries(cellMapping.teams).forEach(([teamId, mgrCell]) => {
-                    const baseCoords = parseCell(mgrCell);
-                    roles.forEach((role, idx) => {
-                        const el = document.getElementById(`${teamId}-${role}`);
-                        if (el) {
-                            const val = (rows[baseCoords.row + idx] && rows[baseCoords.row + idx][baseCoords.col] !== undefined && rows[baseCoords.row + idx][baseCoords.col].trim() !== "") 
-                                ? rows[baseCoords.row + idx][baseCoords.col].trim() 
-                                : "-";
-                            el.innerText = val;
-                        }
-                    });
-                });
+                if (tickerBox) tickerBox.innerHTML = "";
 
             } catch (error) { 
                 console.error("Sync Error:", error);
-                document.getElementById('live-current').innerText = "CONNECTION FAILED";
             } finally {
                 isFetching = false;
             }
